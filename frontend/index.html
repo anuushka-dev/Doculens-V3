@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocuLens — Evidence-First PDF Question Answering</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23143831'/%3E%3Ctext x='8' y='23' font-family='Georgia,serif' font-size='22' fill='%23ffffff'%3ED%3C/text%3E%3Ccircle cx='24' cy='23' r='2.5' fill='%23b8d48b'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/assets/styles/tokens.css" />
+    <link rel="stylesheet" href="/assets/styles/base.css" />
+    <link rel="stylesheet" href="/assets/styles/sidebar.css" />
+    <link rel="stylesheet" href="/assets/styles/workspace.css" />
+    <link rel="stylesheet" href="/assets/styles/modal.css" />
+  </head>
+  <body>
+    <div class="ambient-bg" aria-hidden="true">
+      <div class="ambient-orb orb-1"></div>
+      <div class="ambient-orb orb-2"></div>
+      <div class="ambient-grid"></div>
+    </div>
+
+    <header>
+      <a class="brand" href="/" aria-label="DocuLens home">
+        <span class="mark" aria-hidden="true">D<span>.</span></span>
+        <span class="brand-text">DocuLens</span>
+        <span class="brand-badge">Evidence AI</span>
+      </a>
+      <div class="header-right">
+        <span class="local-label">Your document. Verified citations.</span>
+        <span class="mode-pill" id="mode-pill" title="Retrieval mode">Hybrid search</span>
+        <button class="connection" id="connection" type="button" title="Click to re-check active AI model status">
+          <i aria-hidden="true"></i>
+          <span>Checking model…</span>
+        </button>
+        <button
+          class="hamburger-btn"
+          id="menu-toggle"
+          type="button"
+          aria-label="Open AI Models, API Keys & Effort Menu"
+          aria-expanded="false"
+          aria-controls="settings-drawer"
+          title="Manage Official & 3rd-Party API Keys, Auto-Pulled Models & Effort"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          </svg>
+          <span class="hamburger-label">Models &amp; Keys</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Slide-over Hamburger Menu Drawer for API Keys, Auto-Pulled Models & Effort -->
+    <div class="drawer-backdrop" id="drawer-backdrop" hidden></div>
+    <aside
+      class="settings-drawer"
+      id="settings-drawer"
+      aria-label="AI Providers, Models and Effort Settings"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="drawer-header">
+        <div>
+          <span class="eyebrow">AI ENGINE &amp; API KEYS</span>
+          <h2>Models, Keys &amp; Effort</h2>
+        </div>
+        <button class="icon-button" id="close-drawer" type="button" aria-label="Close settings menu">×</button>
+      </div>
+
+      <div class="drawer-body">
+        <!-- Section 1: Add Official or Third-Party API Key -->
+        <section class="drawer-section">
+          <div class="drawer-section-head">
+            <h3>1. Connect Official or 3rd-Party API Key</h3>
+            <p>Add any API key — DocuLens automatically pulls all available models from that provider.</p>
+          </div>
+
+          <div class="key-form-grid">
+            <label class="drawer-field">
+              <span>AI Provider (Official or 3rd-Party)</span>
+              <select id="provider-select">
+                <option value="auto">✨ Auto-Detect Provider from Key or URL</option>
+                <option value="custom">🔌 Custom OpenAI-Compatible API (Base URL + Key)</option>
+                <option value="custom_anthropic">🔌 Custom Anthropic-Compatible API (Base URL + Key)</option>
+                <optgroup label="Official AI Model APIs">
+                  <option value="openai">OpenAI (GPT-4.1, GPT-4o, o3, o4-mini)</option>
+                  <option value="gemini">Google Gemini (Gemini 2.5 Pro / Flash)</option>
+                  <option value="anthropic">Anthropic Claude (Claude 4 / 3.7 Sonnet)</option>
+                  <option value="deepseek">DeepSeek (DeepSeek V3 &amp; R1)</option>
+                  <option value="mistral">Mistral AI (Mistral Large, Small, Codestral)</option>
+                  <option value="xai">xAI Grok (Grok 3 &amp; Grok 3 Mini)</option>
+                </optgroup>
+                <optgroup label="Third-Party &amp; Ultra-Fast Aggregator APIs">
+                  <option value="groq">Groq Cloud (Ultra-Fast LPU — Llama, DeepSeek, Qwen)</option>
+                  <option value="openrouter">OpenRouter (All-in-One Gateway — 200+ Models)</option>
+                  <option value="together">Together AI (Open-Weight Cloud)</option>
+                  <option value="fireworks">Fireworks AI (Fast Inference)</option>
+                  <option value="cerebras">Cerebras (Wafer-Scale Ultra-Fast)</option>
+                </optgroup>
+                <optgroup label="Optional Local Runtime">
+                  <option value="ollama">Ollama (Local Runtime)</option>
+                </optgroup>
+              </select>
+            </label>
+
+            <label class="drawer-field">
+              <span>API Key</span>
+              <input
+                type="password"
+                id="api-key-input"
+                placeholder="Paste raw API key (no 'Bearer ' prefix)"
+                autocomplete="off"
+              />
+            </label>
+
+            <details class="drawer-custom-details" id="custom-endpoint-details">
+              <summary>🔌 Using a Custom 3rd-Party Base URL / Proxy? (Optional)</summary>
+              <div class="drawer-custom-body">
+                <div class="drawer-preset-row" aria-label="Quick 3rd-Party Endpoints">
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom" data-preset-url="https://vibi.top/v1">VNAI Pro (OpenAI)</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom_anthropic" data-preset-url="https://vibi.top/v1">VNAI Pro (Anthropic)</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom" data-preset-url="https://api.deepinfra.com/v1/openai">DeepInfra</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom" data-preset-url="https://integrate.api.nvidia.com/v1">Nvidia NIM</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom" data-preset-url="https://api.siliconflow.cn/v1">SiliconFlow</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom" data-preset-url="http://127.0.0.1:4000/v1">LiteLLM / vLLM</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom_anthropic" data-preset-url="https://api.z.ai/api/anthropic">Z.ai (Anthropic)</button>
+                  <button type="button" class="drawer-preset-btn" data-preset-provider="custom_anthropic" data-preset-url="https://api.minimax.io/anthropic">MiniMax (Anthropic)</button>
+                </div>
+
+                <label class="drawer-field" id="base-url-group">
+                  <span>Custom 3rd-Party Base URL</span>
+                  <input
+                    type="url"
+                    id="base-url-input"
+                    placeholder="https://api.your-provider.com/v1"
+                    autocomplete="off"
+                  />
+                  <small class="drawer-field-hint">
+                    OpenAI-compatible: usually ends in <code>/v1</code>. Anthropic-compatible: root or <code>/v1</code> (DocuLens calls <code>/v1/messages</code> automatically without duplicating <code>/v1/v1</code>).
+                  </small>
+                </label>
+
+                <label class="drawer-field" id="custom-model-group">
+                  <span>Model ID (Optional — only if /models auto-pull fails)</span>
+                  <input
+                    type="text"
+                    id="custom-model-input"
+                    placeholder="e.g. claude-sonnet-4-20250514 or gpt-4.1"
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+            </details>
+
+            <button class="primary-drawer-btn" id="save-key-btn" type="button">
+              Add Key &amp; Auto-Pull Models
+            </button>
+          </div>
+        </section>
+
+        <!-- Section 2: Connected Providers -->
+        <section class="drawer-section">
+          <div class="drawer-section-head">
+            <h3>2. Connected Providers</h3>
+            <p>Sync live model catalogs or remove keys anytime.</p>
+          </div>
+          <div class="connected-providers-list" id="connected-providers-list"></div>
+        </section>
+
+        <!-- Section 3: Auto-Pulled Models -->
+        <section class="drawer-section">
+          <div class="drawer-section-head">
+            <h3>3. Available &amp; Auto-Pulled Models</h3>
+            <p>Click any model to activate it in the bottom composer bar.</p>
+          </div>
+          <input
+            type="search"
+            class="drawer-search"
+            id="pulled-models-search"
+            placeholder="Search pulled models (e.g. gpt-4o, gemini, claude, llama, deepseek)…"
+          />
+          <div class="pulled-models-list" id="pulled-models-list"></div>
+        </section>
+
+        <!-- Section 4: Reasoning & Verification Effort -->
+        <section class="drawer-section">
+          <div class="drawer-section-head">
+            <h3>4. Reasoning &amp; Verification Effort</h3>
+            <p>Control speed vs. multi-pass verification depth (also selectable in the bottom bar).</p>
+          </div>
+          <div class="drawer-effort-group" id="drawer-effort-group"></div>
+        </section>
+
+        <!-- Section 5: Smart Prompt Management -->
+        <section class="drawer-section">
+          <label class="drawer-toggle-row" for="auto-fix-toggle">
+            <div>
+              <strong>Smart Prompt Auto-Repair &amp; Doubt Clarification</strong>
+              <small>Automatically fixes typos, shorthand, or Hinglish prompts and asks clarifying questions if a query is ambiguous.</small>
+            </div>
+            <input type="checkbox" id="auto-fix-toggle" checked />
+          </label>
+        </section>
+      </div>
+    </aside>
+
+    <main>
+      <aside class="sidebar" aria-label="Document upload and session controls">
+        <div class="eyebrow">DOCUMENT WORKSPACE</div>
+        <h1>Clarity starts<br />with the <em>source.</em></h1>
+        <p class="intro">
+          Upload any PDF, ask in natural language, and get fast, source-verified answers with exact page citations.
+        </p>
+
+        <label class="dropzone" id="dropzone" for="file" tabindex="0">
+          <input id="file" type="file" accept=".pdf,application/pdf" hidden />
+          <span class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </span>
+          <strong>Choose a PDF</strong>
+          <span>or drag &amp; drop it here</span>
+          <small id="limits">Selectable text · up to 20 MiB · max 350 pages</small>
+        </label>
+
+        <div class="document" id="document" hidden>
+          <span class="file-icon" aria-hidden="true">PDF</span>
+          <div class="file-meta">
+            <strong id="filename"></strong>
+            <span id="filedetails"></span>
+            <span class="session-expiry" id="session-expiry" hidden></span>
+          </div>
+          <button class="icon-button" id="remove" type="button" title="Remove PDF" aria-label="Remove PDF">×</button>
+        </div>
+
+        <p class="status" id="upload-status" role="status" aria-live="polite"></p>
+        <div class="warnings" id="warnings" hidden></div>
+
+        <div class="source-note">
+          <span class="note-icon" aria-hidden="true">↳</span>
+          <div>
+            <strong>Evidence, before answers.</strong>
+            <p>
+              Answers use exact PDF excerpts and page citations. Shorter PDFs automatically use the ultra-fast direct evidence path.
+            </p>
+          </div>
+        </div>
+
+        <details class="scope">
+          <summary>What can I upload?</summary>
+          <p>
+            Text-based PDFs up to 20 MiB and 350 pages. Scanned image-only pages without selectable text are flagged during upload.
+          </p>
+        </details>
+
+        <div class="sidebar-bottom">
+          <span class="small-dot" aria-hidden="true"></span>
+          <span>Evidence-first Q&amp;A</span>
+          <a href="/docs" target="_blank" rel="noreferrer">API ↗</a>
+        </div>
+      </aside>
+
+      <section class="workspace" aria-label="Question and answer workspace">
+        <div class="workspace-bar">
+          <span>ASK YOUR DOCUMENT</span>
+          <div class="workspace-actions">
+            <button class="ghost-button" id="clear-chat" type="button" hidden>Clear chat</button>
+            <button class="ghost-button" id="export-chat" type="button" hidden title="Copy Q&A transcript as Markdown">
+              Export MD
+            </button>
+            <span class="verify-pill"><i>✓</i> Evidence mode</span>
+          </div>
+        </div>
+
+        <div class="conversation" id="conversation" aria-live="polite">
+          <div class="welcome" id="welcome">
+            <div class="lens-hero-graphic" aria-hidden="true">
+              <div class="lens-ring ring-outer"></div>
+              <div class="lens-ring ring-middle"></div>
+              <div class="lens-core">
+                <svg viewBox="0 0 48 48" width="38" height="38" fill="none">
+                  <circle cx="21" cy="21" r="12" stroke="currentColor" stroke-width="2.5" />
+                  <path d="M16 18h10M16 22h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                  <path d="M30 30L40 40" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+              <span class="floating-badge fb-left">✓ Verified Quote · p. 4</span>
+              <span class="floating-badge fb-right">⚡ Multi-Model AI</span>
+            </div>
+
+            <div class="eyebrow">LESS GUESSWORK. MORE UNDERSTANDING.</div>
+            <h2>Your PDF has the details.<br />Let’s bring them <em>into focus.</em></h2>
+            <p>
+              Upload a document, pick any official or third-party AI model below, and ask naturally — even rough or Hinglish prompts are understood automatically.
+            </p>
+            <div class="steps" aria-label="How DocuLens works">
+              <span><b>01</b> Upload your PDF</span>
+              <span><b>02</b> Ask naturally (any model &amp; effort)</span>
+              <span><b>03</b> Inspect verified citations</span>
+            </div>
+            <div class="starter-prompts" id="starter-prompts" hidden aria-label="Suggested starter questions"></div>
+          </div>
+        </div>
+
+        <form class="ask-box" id="ask-form">
+          <label class="sr-only" for="question">Ask a question about the uploaded PDF</label>
+          <textarea
+            id="question"
+            rows="2"
+            maxlength="2000"
+            placeholder="Upload a PDF to start asking questions..."
+            disabled
+          ></textarea>
+
+          <div class="ask-footer">
+            <!-- Left side of bottom composer bar: Model selector (with company logo), Effort selector, Smart Polish -->
+            <div class="composer-controls-left">
+              <!-- Model Selector Pill + Popover -->
+              <div class="composer-dropdown-wrap">
+                <button
+                  type="button"
+                  class="composer-pill model-selector-pill"
+                  id="composer-model-btn"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  title="Select AI Model (shows company logo)"
+                >
+                  <span class="company-logo-badge small" id="composer-model-logo" aria-hidden="true"></span>
+                  <span class="composer-pill-text" id="composer-model-label">qwen3.5:4b</span>
+                  <span class="composer-chevron" aria-hidden="true">▾</span>
+                </button>
+
+                <div class="composer-popover model-popover" id="model-popover" hidden>
+                  <div class="popover-header">
+                    <span>Select AI Model</span>
+                    <button type="button" class="popover-link-btn" id="popover-add-key-btn">+ API Key</button>
+                  </div>
+                  <input
+                    type="search"
+                    class="popover-search"
+                    id="popover-model-search"
+                    placeholder="Filter models (GPT, Gemini, Claude, Llama…)"
+                  />
+                  <div class="popover-list" id="popover-model-list" role="listbox"></div>
+                </div>
+              </div>
+
+              <!-- Effort Selector Pill + Popover -->
+              <div class="composer-dropdown-wrap">
+                <button
+                  type="button"
+                  class="composer-pill effort-selector-pill"
+                  id="composer-effort-btn"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  title="Select Reasoning & Verification Effort"
+                >
+                  <span class="effort-pill-icon" id="composer-effort-icon" aria-hidden="true"></span>
+                  <span class="composer-pill-text" id="composer-effort-label">Medium</span>
+                  <span class="composer-chevron" aria-hidden="true">▾</span>
+                </button>
+
+                <div class="composer-popover effort-popover" id="effort-popover" hidden>
+                  <div class="popover-header">
+                    <span>Reasoning &amp; Verification Effort</span>
+                  </div>
+                  <div class="popover-list" id="popover-effort-list" role="listbox"></div>
+                </div>
+              </div>
+
+              <!-- Smart Prompt Polish Button -->
+              <button
+                type="button"
+                class="composer-pill enhance-pill"
+                id="enhance-prompt-btn"
+                title="Auto-polish messy, shorthand, or Hinglish prompt"
+                disabled
+              >
+                <span aria-hidden="true">✨</span>
+                <span class="enhance-pill-label">Polish</span>
+              </button>
+            </div>
+
+            <!-- Right side of bottom composer bar: Hint, Char count, Send button -->
+            <div class="composer-controls-right">
+              <div class="ask-hint">
+                <span class="hint-kbd">Enter to send</span>
+                <span class="char-count" id="char-count">0 / 2000</span>
+              </div>
+              <button id="send" type="submit" disabled>
+                <span>Ask DocuLens</span>
+                <i aria-hidden="true">↗</i>
+              </button>
+            </div>
+          </div>
+        </form>
+        <p class="disclaimer">
+          Source text is deterministically verified against your PDF. Imperfect prompts are auto-repaired; if a question is ambiguous, DocuLens asks to clarify first.
+        </p>
+      </section>
+    </main>
+
+    <dialog id="source-dialog" aria-labelledby="source-title">
+      <div class="dialog-top">
+        <div>
+          <span class="eyebrow">SOURCE INSPECTION</span>
+          <h3 id="source-title">PDF Page</h3>
+        </div>
+        <button class="icon-button" id="close-source" type="button" aria-label="Close source dialog">×</button>
+      </div>
+      <div class="dialog-controls">
+        <div class="source-tabs" role="tablist" aria-label="Source view mode">
+          <button class="active" id="text-tab" type="button" role="tab" aria-selected="true">
+            Extracted text
+          </button>
+          <button id="pdf-tab" type="button" role="tab" aria-selected="false">Original PDF page</button>
+        </div>
+        <div class="page-stepper" aria-label="Page navigation">
+          <button class="ghost-button" id="prev-page" type="button" title="Previous PDF page">← Prev</button>
+          <span id="page-indicator">Page 1</span>
+          <button class="ghost-button" id="next-page" type="button" title="Next PDF page">Next →</button>
+          <button class="ghost-button" id="copy-page" type="button" title="Copy extracted page text">
+            Copy page
+          </button>
+        </div>
+      </div>
+      <div class="source-note-row">
+        <p class="source-page-note">
+          Page numbers refer to the PDF’s sequential page order (1 = first page in the file).
+        </p>
+        <span class="source-match-info" id="source-match-info" hidden>✓ Exact citation highlighted</span>
+      </div>
+      <pre id="source-text"></pre>
+      <iframe id="pdf-frame" title="Original PDF page" hidden></iframe>
+    </dialog>
+
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script type="module" src="/assets/src/main.js"></script>
+  </body>
+</html>
