@@ -1,5 +1,7 @@
 # DocuLens
 
+Live: https://doculens-v3.onrender.com
+
 **Evidence-First PDF Question Answering with Hybrid RAG, Deterministic Citation Verification, and Multi-Provider AI Models**
 
 DocuLens is a fast, browser-based document intelligence application built with **Python 3.12, FastAPI, FAISS, Sentence Transformers, BM25, PyMuPDF, and Modular ES6 JavaScript**. Upload any text-selectable PDF, connect **official, third-party, or custom AI provider API keys** (or optional local Ollama), ask questions in plain English or Hinglish, and get grounded answers linked directly to exact verified quotes and PDF page numbers.
